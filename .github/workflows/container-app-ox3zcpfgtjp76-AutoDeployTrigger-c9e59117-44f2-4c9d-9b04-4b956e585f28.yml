@@ -1,0 +1,45 @@
+name: Trigger auto deployment for container-app-ox3zcpfgtjp76
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - 'deploy/elk/elasticsearch/**'
+    - '.github/workflows/container-app-ox3zcpfgtjp76-AutoDeployTrigger-c9e59117-44f2-4c9d-9b04-4b956e585f28.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.CONTAINERAPPOX3ZCPFGTJP76_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CONTAINERAPPOX3ZCPFGTJP76_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CONTAINERAPPOX3ZCPFGTJP76_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }}/deploy/elk/elasticsearch 
+          registryUrl: containerregistryox3zcpfgtjp76.azurecr.io
+          registryUsername: ${{ secrets.CONTAINERAPPOX3ZCPFGTJP76_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CONTAINERAPPOX3ZCPFGTJP76_REGISTRY_PASSWORD }}
+          containerAppName: container-app-ox3zcpfgtjp76
+          resourceGroup: eshoponcontainers981e
+          imageToBuild: containerregistryox3zcpfgtjp76.azurecr.io/container-app-ox3zcpfgtjp76:${{ github.sha }}
+          dockerfilePath: Dockerfile
+
+
